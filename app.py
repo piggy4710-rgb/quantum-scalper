@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 # ==========================================
-# 🎨 UI 커스텀 스타일 (CSS) - [핵폭탄급 강제 숨김]
+# 🎨 UI 커스텀 스타일 (CSS) - [최종: 버튼 박멸 버전]
 # ==========================================
 def apply_custom_style():
     st.markdown("""
@@ -31,47 +31,36 @@ def apply_custom_style():
             border: 1px solid #FFEEBA;
         }
 
-        /* [핵심] 2. 메뉴바, 헤더, 툴바, 푸터 싹 다 제거 */
+        /* [핵심] 2. 화면에 보이는 모든 장식 제거 */
         
-        /* 상단 헤더 공간 자체를 없애버림 */
-        header {
-            visibility: hidden !important;
-            display: none !important;
-            height: 0px !important;
-        }
-        
-        /* 햄버거 메뉴 버튼이 있는 툴바 제거 */
-        [data-testid="stToolbar"] {
-            visibility: hidden !important;
-            display: none !important;
-        }
-        
-        /* 상단 무지개색 데코레이션 제거 */
-        [data-testid="stDecoration"] {
-            visibility: hidden !important;
-            display: none !important;
-        }
-        
-        /* 헤더 컨테이너 제거 */
-        [data-testid="stHeader"] {
-            visibility: hidden !important;
-            display: none !important;
-            background: none !important;
-        }
+        /* (1) 상단 헤더 & 툴바 제거 */
+        header { visibility: hidden !important; display: none !important; }
+        [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+        [data-testid="stDecoration"] { visibility: hidden !important; display: none !important; }
+        [data-testid="stHeader"] { visibility: hidden !important; display: none !important; }
 
-        /* 하단 푸터 (Made with Streamlit) 제거 */
-        footer {
+        /* (2) 하단 푸터 제거 */
+        footer { visibility: hidden !important; display: none !important; }
+
+        /* ★★★ (3) 범인 검거: 오른쪽 아래 버튼들 제거 ★★★ */
+        
+        /* 왕관 모양 버튼 (Deploy Button) */
+        .stAppDeployButton {
+            visibility: hidden !important;
+            display: none !important;
+        }
+        
+        /* 사람/로고 모양 버튼 (Status Widget) */
+        [data-testid="stStatusWidget"] {
             visibility: hidden !important;
             display: none !important;
         }
 
-        /* 3. 모바일 화면 강제 조정 (빈 공간 삭제) */
+        /* 3. 모바일 화면 강제 조정 */
         .block-container {
-            padding-top: 1rem !important; /* 위쪽 여백 삭제 */
+            padding-top: 1rem !important;
             padding-bottom: 5rem !important;
         }
-        
-        /* 아이폰 사파리 노치 공간 강제 무시 */
         .stApp {
             margin-top: 0px !important;
         }
@@ -88,11 +77,9 @@ class QuantumEngine:
 
     def check_status(self):
         try:
-            # 1일치 데이터 가져오기 (가장 빠름)
             df = yf.download(self.ticker, period="1d", interval="1m", progress=False, auto_adjust=True)
             if df.empty: return False, "데이터 없음"
             
-            # 멀티인덱스 컬럼 처리 (yfinance 최신버전 대응)
             if isinstance(df.columns, pd.MultiIndex):
                 try: df.columns = df.columns.droplevel('Ticker')
                 except: df.columns = df.columns.droplevel(1)
@@ -104,7 +91,6 @@ class QuantumEngine:
 
     def analyze(self, mode, period_len):
         df = self.df
-        # 데이터 슬라이싱
         if period_len == "1h": df = df.tail(60)
         elif period_len == "3h": df = df.tail(180)
 
@@ -116,7 +102,6 @@ class QuantumEngine:
         score = 0
         reasons = []
 
-        # 1. 캔들 패턴 분석
         if (prev['Close'] < prev['Open']) and (curr['Close'] > curr['Open']) and \
            (curr['Open'] <= prev['Close']) and (curr['Close'] >= prev['Open']):
             score += 40
@@ -128,7 +113,6 @@ class QuantumEngine:
             score += 30
             reasons.append("🔨 바닥을 다지는 '망치형' 캔들!")
 
-        # 2. 야수 모드 (거래량 + 변동성)
         if mode == "beast":
             vol_avg = df['Volume'].rolling(20).mean().iloc[-1]
             if pd.isna(vol_avg) or vol_avg == 0: vol_avg = 1
@@ -151,13 +135,11 @@ class QuantumEngine:
 # ==========================================
 def main():
     st.set_page_config(page_title="급등주 포착기", page_icon="📈", layout="centered")
-    apply_custom_style() # 핵폭탄 CSS 적용
+    apply_custom_style() # CSS 적용
 
-    # --- [기능] 마스터 공지사항 시스템 ---
     if 'notice_text' not in st.session_state:
         st.session_state['notice_text'] = "📢 오늘 미장 휴장일입니다. 이용에 참고해주세요!" 
 
-    # 사이드바 (지갑 & 관리자 로그인)
     with st.sidebar:
         st.header("내 지갑 👛")
         if 'points' not in st.session_state: st.session_state.points = 5000 
@@ -171,7 +153,6 @@ def main():
         st.markdown("### 🔒 관리자(Master) 메뉴")
         admin_pw = st.text_input("관리자 암호", type="password", placeholder="비밀번호 입력")
         
-        # 관리자 로그인 성공 시에만 공지 수정 가능
         if admin_pw == "master1234":
             st.success("관리자 인증 완료")
             new_notice = st.text_area("공지사항 수정하기", value=st.session_state['notice_text'])
@@ -181,11 +162,9 @@ def main():
         elif admin_pw:
             st.error("암호가 틀렸습니다.")
 
-    # --- 메인 헤더 & 공지사항 표시 ---
     st.title("📈 실전 급등주 포착기")
     st.caption("AI 기반 실시간 캔들 & 수급 분석 솔루션")
     
-    # 공지사항 박스
     st.markdown(f"""
         <div class="notice-box">
             <b>[Master 공지]</b><br>
@@ -193,7 +172,6 @@ def main():
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 1단계: 종목 확인 ---
     with st.container(border=True):
         st.subheader("1️⃣ 종목 상태 확인")
         col1, col2 = st.columns([3, 1])
@@ -216,9 +194,7 @@ def main():
                 else:
                     st.error("종목을 찾을 수 없습니다.")
 
-    # --- 2단계: 결과 및 결제 ---
     if st.session_state.get('engine_status') == "checked":
-        # 데이터 신선도 리포트
         last_time = st.session_state['last_time']
         st.success(f"✅ **{st.session_state['target_ticker']}** 데이터 수신 완료! (기준: {last_time.strftime('%H:%M:%S')})")
         st.warning("⚠️ **잠깐!** 무료 서버 특성상 15분 지연될 수 있습니다. 현재 시간과 비교 후 이용하세요.")
@@ -271,7 +247,6 @@ def run_analysis(period_len, mode, cost):
 
     st.divider()
     
-    # 결과 표시
     st.markdown(f"### 📝 {st.session_state['target_ticker']} 분석 결과")
     current_price = engine.df['Close'].iloc[-1]
     st.metric("현재가", f"${current_price:.2f}")
@@ -288,7 +263,6 @@ def run_analysis(period_len, mode, cost):
                 st.info(r)
 
     st.markdown("---")
-    # 최종 판단
     if mode == "beast":
         if score >= 50: 
             st.balloons()
