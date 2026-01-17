@@ -5,12 +5,12 @@ import time
 from datetime import datetime
 
 # ==========================================
-# 🎨 UI 커스텀 스타일 (CSS)
+# 🎨 UI 커스텀 스타일 (CSS) - [수정됨: 메뉴 숨기기]
 # ==========================================
 def apply_custom_style():
     st.markdown("""
         <style>
-        /* 메인 타이틀 폰트 및 마진 조정 */
+        /* 1. 메인 타이틀 폰트 및 마진 조정 */
         .block-container {
             padding-top: 2rem;
             padding-bottom: 2rem;
@@ -20,14 +20,16 @@ def apply_custom_style():
             font-weight: 700;
             color: #1E1E1E;
         }
-        /* 버튼 스타일 */
+        
+        /* 2. 버튼 스타일 */
         .stButton>button {
             border-radius: 12px;
             font-weight: bold;
             border: none;
             transition: 0.3s;
         }
-        /* 공지사항 박스 */
+        
+        /* 3. 공지사항 박스 */
         .notice-box {
             background-color: #FFF3CD;
             color: #856404;
@@ -36,6 +38,11 @@ def apply_custom_style():
             margin-bottom: 20px;
             border: 1px solid #FFEEBA;
         }
+
+        /* [중요] 4. 깃허브/메뉴 숨기기 (보안) */
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
         </style>
     """, unsafe_allow_html=True)
 
@@ -49,11 +56,15 @@ class QuantumEngine:
 
     def check_status(self):
         try:
+            # 1일치 데이터 가져오기
             df = yf.download(self.ticker, period="1d", interval="1m", progress=False, auto_adjust=True)
             if df.empty: return False, "데이터 없음"
+            
+            # 멀티인덱스 컬럼 처리
             if isinstance(df.columns, pd.MultiIndex):
                 try: df.columns = df.columns.droplevel('Ticker')
                 except: df.columns = df.columns.droplevel(1)
+            
             self.df = df
             return True, df.index[-1]
         except Exception as e:
@@ -61,6 +72,7 @@ class QuantumEngine:
 
     def analyze(self, mode, period_len):
         df = self.df
+        # 데이터 슬라이싱
         if period_len == "1h": df = df.tail(60)
         elif period_len == "3h": df = df.tail(180)
 
@@ -72,7 +84,7 @@ class QuantumEngine:
         score = 0
         reasons = []
 
-        # 패턴 분석
+        # 1. 캔들 패턴 분석
         if (prev['Close'] < prev['Open']) and (curr['Close'] > curr['Open']) and \
            (curr['Open'] <= prev['Close']) and (curr['Close'] >= prev['Open']):
             score += 40
@@ -84,7 +96,7 @@ class QuantumEngine:
             score += 30
             reasons.append("🔨 바닥을 다지는 '망치형' 캔들!")
 
-        # 야수 모드
+        # 2. 야수 모드 (거래량 + 변동성)
         if mode == "beast":
             vol_avg = df['Volume'].rolling(20).mean().iloc[-1]
             if pd.isna(vol_avg) or vol_avg == 0: vol_avg = 1
@@ -107,7 +119,7 @@ class QuantumEngine:
 # ==========================================
 def main():
     st.set_page_config(page_title="급등주 포착기", page_icon="📈", layout="centered")
-    apply_custom_style() # 예쁜 스타일 적용
+    apply_custom_style() # 메뉴 숨김 CSS 적용
 
     # --- [기능] 마스터 공지사항 시스템 ---
     if 'notice_text' not in st.session_state:
@@ -121,14 +133,14 @@ def main():
         
         if st.button("📺 광고 보고 500원 충전"):
             st.session_state.points += 500
-            st.toast("500원이 충전되었습니다!", icon="💰") # 알림 메시지 예쁘게
+            st.toast("500원이 충전되었습니다!", icon="💰")
 
         st.divider()
         st.markdown("### 🔒 관리자(Master) 메뉴")
         admin_pw = st.text_input("관리자 암호", type="password", placeholder="비밀번호 입력")
         
         # 관리자 로그인 성공 시에만 공지 수정 가능
-        if admin_pw == "master1234": # [비밀번호 설정]
+        if admin_pw == "master1234":
             st.success("관리자 인증 완료")
             new_notice = st.text_area("공지사항 수정하기", value=st.session_state['notice_text'])
             if st.button("공지 등록"):
@@ -168,7 +180,7 @@ def main():
                     st.session_state['engine'] = engine
                     st.session_state['last_time'] = result
                     st.session_state['engine_status'] = "checked"
-                    st.session_state['target_ticker'] = ticker # 티커 저장
+                    st.session_state['target_ticker'] = ticker
                 else:
                     st.error("종목을 찾을 수 없습니다.")
 
@@ -183,9 +195,8 @@ def main():
         with st.container(border=True):
             st.subheader("2️⃣ 분석 모드 선택")
             
-            # 탭으로 깔끔하게 분리
             tab1, tab2 = st.tabs(["⏱️ 단기 분석 (1시간)", "🛡️ 추세 분석 (3시간)"])
-            period_len = "1h" # 기본값
+            period_len = "1h"
 
             with tab1:
                 st.caption("최근 60분간의 급박한 움직임을 분석합니다.")
@@ -220,7 +231,7 @@ def run_analysis(period_len, mode, cost):
     st.session_state.points -= cost
     
     with st.status("🧠 AI 분석 엔진 가동 중...", expanded=True):
-        time.sleep(0.7) # 있어 보이는 딜레이
+        time.sleep(0.7)
         st.write("캔들 패턴 스캐닝...")
         time.sleep(0.3)
         st.write("수급 및 거래량 분석...")
