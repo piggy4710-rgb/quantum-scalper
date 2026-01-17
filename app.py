@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 # ==========================================
-# 🎨 UI 커스텀 스타일 (CSS) - [최종: 버튼 박멸 버전]
+# 🎨 UI 커스텀 스타일 (CSS) - [최종: 끈질긴 버튼 2개 제거]
 # ==========================================
 def apply_custom_style():
     st.markdown("""
@@ -31,32 +31,41 @@ def apply_custom_style():
             border: 1px solid #FFEEBA;
         }
 
-        /* [핵심] 2. 화면에 보이는 모든 장식 제거 */
+        /* [핵심] 2. 화면에 보이는 모든 장식 및 버튼 제거 */
         
-        /* (1) 상단 헤더 & 툴바 제거 */
+        /* (1) 상단 헤더 & 툴바 (점 3개 메뉴 포함) */
         header { visibility: hidden !important; display: none !important; }
         [data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
-        [data-testid="stDecoration"] { visibility: hidden !important; display: none !important; }
         [data-testid="stHeader"] { visibility: hidden !important; display: none !important; }
+        [data-testid="stDecoration"] { visibility: hidden !important; display: none !important; }
 
-        /* (2) 하단 푸터 제거 */
+        /* (2) 하단 푸터 (Made with Streamlit) */
         footer { visibility: hidden !important; display: none !important; }
 
-        /* ★★★ (3) 범인 검거: 오른쪽 아래 버튼들 제거 ★★★ */
+        /* ★★★ (3) 범인 검거: 오른쪽 아래 둥둥 떠다니는 버튼들 ★★★ */
         
-        /* 왕관 모양 버튼 (Deploy Button) */
+        /* 오른쪽 하단 'Manage App' / 'Deploy' 버튼 */
         .stAppDeployButton {
             visibility: hidden !important;
             display: none !important;
+            opacity: 0 !important;
         }
         
-        /* 사람/로고 모양 버튼 (Status Widget) */
+        /* 오른쪽 하단 'Status' 위젯 (사람 모양/로고) */
         [data-testid="stStatusWidget"] {
             visibility: hidden !important;
             display: none !important;
+            opacity: 0 !important;
+        }
+        
+        /* 혹시 모를 뷰어 배지 (Github 링크 등) */
+        div[class^="viewerBadge"] {
+            visibility: hidden !important;
+            display: none !important;
+            opacity: 0 !important;
         }
 
-        /* 3. 모바일 화면 강제 조정 */
+        /* 3. 모바일 화면 여백 강제 조정 */
         .block-container {
             padding-top: 1rem !important;
             padding-bottom: 5rem !important;
